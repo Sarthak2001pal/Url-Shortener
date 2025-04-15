@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            display: none;
+        }
+        .short-url {
+            font-weight: bold;
+            color: #2c3e50;
+            word-break: break-all;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+            display: none;
+        }
+        .copy-btn {
+            background-color: #2ecc71;
+            margin-top: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #27ae60;
+        }
+        .analytics-btn {
+            background-color: #9b59b6;
+            margin-top: 10px;
+        }
+        .analytics-btn:hover {
+            background-color: #8e44ad;
+        }
+        .history {
+            margin-top: 30px;
+        }
+        .history h2 {
+            color: #2c3e50;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .history-list {
+            list-style: none;
+            padding: 0;
+        }
+        .history-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .history-item p {
+            margin: 5px 0;
+        }
+        .loading {
+            text-align: center;
+            display: none;
+        }
+        .analytics-container {
+            display: none;
+            margin-top: 30px;
+        }
+        .analytics-details {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .visit-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .visit-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .visit-item:last-child {
+            border-bottom: none;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .close-btn {
+            background-color: #e74c3c;
+            margin-top: 15px;
+        }
+        .close-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <h1>URL Shortener</h1>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="shorten">Shorten URL</div>
+        <div class="tab" data-tab="history">History</div>
+    </div>
+    
+    <div class="tab-content active" id="shorten-tab">
+        <div class="container">
+            <div class="input-group">
+                <label for="longUrl">Enter your URL:</label>
+                <input type="url" id="longUrl" placeholder="https://example.com/your-very-long-url-that-needs-shortening" required>
+            </div>
+            
+            <button id="shortenBtn">Shorten URL</button>
+            
+            <div class="loading" id="loading">
+                Processing...
+            </div>
+            
+            <div class="error" id="error">
+                Something went wrong. Please try again.
+            </div>
+            
+            <div class="result" id="result">
+                <p>Your shortened URL:</p>
+                <p class="short-url" id="shortUrl"></p>
+                <button class="copy-btn" id="copyBtn">Copy to Clipboard</button>
+                <button class="analytics-btn" id="viewAnalyticsBtn">View Analytics</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-content" id="history-tab">
+        <div class="container">
+            <h2>Your Shortened URLs</h2>
+            <ul class="history-list" id="historyList">
+                <!-- History items will be added here -->
+            </ul>
+        </div>
+    </div>
+    
+    <div class="analytics-container" id="analyticsContainer">
+        <div class="container">
+            <h3>URL Analytics</h3>
+            <div class="analytics-details" id="analyticsDetails">
+                <p><strong>Original URL:</strong> <span id="analyticsOriginalUrl"></span></p>
+                <p><strong>Short URL:</strong> <span id="analyticsShortUrl"></span></p>
+                <p><strong>Total Clicks:</strong> <span id="analyticsTotalClicks">0</span></p>
+                
+                <h4>Visit History</h4>
+                <div class="visit-list" id="visitList">
+                    <!-- Visit items will be added here -->
+                </div>
+            </div>
+            <button class="close-btn" id="closeAnalyticsBtn">Close Analytics</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const shortenBtn = document.getElementById('shortenBtn');
+            const longUrlInput = document.getElementById('longUrl');
+            const resultDiv = document.getElementById('result');
+            const shortUrlElement = document.getElementById('shortUrl');
+            const copyBtn = document.getElementById('copyBtn');
+            const viewAnalyticsBtn = document.getElementById('viewAnalyticsBtn');
+            const errorDiv = document.getElementById('error');
+            const loadingDiv = document.getElementById('loading');
+            const historyList = document.getElementById('historyList');
+            const analyticsContainer = document.getElementById('analyticsContainer');
+            const closeAnalyticsBtn = document.getElementById('closeAnalyticsBtn');
+            const analyticsOriginalUrl = document.getElementById('analyticsOriginalUrl');
+            const analyticsShortUrl = document.getElementById('analyticsShortUrl');
+            const analyticsTotalClicks = document.getElementById('analyticsTotalClicks');
+            const visitList = document.getElementById('visitList');
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // Tab functionality
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(`${this.dataset.tab}-tab`).classList.add('active');
+                });
+            });
+            
+            // Load history from localStorage
+            loadHistory();
+            
+            shortenBtn.addEventListener('click', async function() {
+                const longUrl = longUrlInput.value.trim();
+                
+                if (!longUrl) {
+                    showError('Please enter a valid URL');
+                    return;
+                }
+                
+                try {
+                    // Hide previous results/errors and show loading
+                    resultDiv.style.display = 'none';
+                    errorDiv.style.display = 'none';
+                    loadingDiv.style.display = 'block';
+                    
+                    // Make API request to your backend
+                    const response = await fetch('/url', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ url: longUrl })
+                    });
+                    
+                    loadingDiv.style.display = 'none';
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to shorten URL');
+                    }
+                    
+                    const data = await response.json();
+                    const shortUrl = `${window.location.origin}/${data.id}`;
+                    
+                    // Display the result
+                    shortUrlElement.textContent = shortUrl;
+                    resultDiv.style.display = 'block';
+                    
+                    // Save to history
+                    saveToHistory(longUrl, shortUrl, data.id);
+                    
+                } catch (error) {
+                    showError(error.message);
+                }
+            });
+            
+            copyBtn.addEventListener('click', function() {
+                const shortUrl = shortUrlElement.textContent;
+                navigator.clipboard.writeText(shortUrl)
+                    .then(() => {
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = 'Copy to Clipboard';
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                    });
+            });
+            
+            viewAnalyticsBtn.addEventListener('click', function() {
+                const shortUrl = shortUrlElement.textContent;
+                const shortId = shortUrl.split('/').pop();
+                fetchAndDisplayAnalytics(shortId, shortUrl, longUrlInput.value);
+            });
+            
+            closeAnalyticsBtn.addEventListener('click', function() {
+                analyticsContainer.style.display = 'none';
+            });
+            
+            function showError(message) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                loadingDiv.style.display = 'none';
+            }
+            
+            async function fetchAndDisplayAnalytics(shortId, shortUrl, originalUrl) {
+                try {
+                    // Show loading
+                    loadingDiv.style.display = 'block';
+                    
+                    // Make API request to get analytics data
+                    const response = await fetch(`/url/analytics/${shortId}`);
+                    
+                    loadingDiv.style.display = 'none';
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to fetch analytics');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Populate analytics container
+                    analyticsOriginalUrl.textContent = originalUrl || 'Unknown';
+                    analyticsShortUrl.textContent = shortUrl;
+                    analyticsTotalClicks.textContent = data.totalClicks;
+                    
+                    // Clear visit list
+                    visitList.innerHTML = '';
+                    
+                    // Add visits to list
+                    if (data.analytics && data.analytics.length > 0) {
+                        data.analytics.forEach((visit, index) => {
+                            const visitItem = document.createElement('div');
+                            visitItem.className = 'visit-item';
+                            
+                            const date = new Date(visit.timestamp);
+                            visitItem.textContent = `Visit ${index + 1}: ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+                            
+                            visitList.appendChild(visitItem);
+                        });
+                    } else {
+                        visitList.innerHTML = '<div class="visit-item">No visits yet</div>';
+                    }
+                    
+                    // Show analytics container
+                    analyticsContainer.style.display = 'block';
+                    
+                } catch (error) {
+                    showError(error.message);
+                }
+            }
+            
+            function saveToHistory(longUrl, shortUrl, shortId) {
+                const history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
+                
+                // Add new entry to the beginning
+                history.unshift({
+                    longUrl,
+                    shortUrl,
+                    shortId,
+                    date: new Date().toISOString()
+                });
+                
+                // Keep only the last 10 entries
+                const trimmedHistory = history.slice(0, 10);
+                
+                localStorage.setItem('urlHistory', JSON.stringify(trimmedHistory));
+                
+                // Update the history display
+                loadHistory();
+            }
+            
+            function loadHistory() {
+                const history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
+                historyList.innerHTML = '';
+                
+                if (history.length === 0) {
+                    historyList.innerHTML = '<li class="history-item">No history yet</li>';
+                    return;
+                }
+                
+                history.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'history-item';
+                    
+                    const date = new Date(item.date);
+                    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    
+                    listItem.innerHTML = `
+                        <p><strong>Original:</strong> ${item.longUrl}</p>
+                        <p><strong>Shortened:</strong> <a href="${item.shortUrl}" target="_blank">${item.shortUrl}</a></p>
+                        <p><small>Created: ${formattedDate}</small></p>
+                        <button class="analytics-btn view-history-analytics" data-short-id="${item.shortId}" data-short-url="${item.shortUrl}" data-original-url="${item.longUrl}">View Analytics</button>
+                    `;
+                    
+                    historyList.appendChild(listItem);
+                });
+                
+                // Add event listeners to view analytics buttons
+                document.querySelectorAll('.view-history-analytics').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const shortId = this.getAttribute('data-short-id');
+                        const shortUrl = this.getAttribute('data-short-url');
+                        const originalUrl = this.getAttribute('data-original-url');
+                        fetchAndDisplayAnalytics(shortId, shortUrl, originalUrl);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
