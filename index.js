@@ -1,8 +1,8 @@
 const express = require("express")
 const {connectToMongoDb} = require("./connection")
-
+const cookieParser = require("cookie-parser")
 const path = require("path")
-
+const { restrictToLoggedinUserOnly, checkAuth } = require("./middlewares/auth");
 const userRoute = require('./routes/user_route')
 const staticRoute = require("./routes/staticRouter")
 const urlRoute =  require("./routes/url_router")
@@ -19,11 +19,12 @@ app.set("views", path.resolve("./views"))
 
 app.use(express.json())
 app.use(express.urlencoded({extended:false}))
+app.use(cookieParser())
 
 
-app.use('/url',urlRoute)
+app.use('/url',retrictToLoggedinUserOnly,urlRoute)
 app.use('/user',userRoute)
-app.use("/",staticRoute )
+app.use("/",checkAuth,staticRoute )
 
 app.get('/url/:shortId',async(req,res)=>{
     const shortId = req.params.shortId
@@ -36,6 +37,7 @@ app.get('/url/:shortId',async(req,res)=>{
         visitHistory:{
             timestamp: Date.now()
         }
+        
     }})
     res.redirect(entry.redirectUrl)
 })
